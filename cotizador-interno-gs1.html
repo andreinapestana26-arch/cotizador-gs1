@@ -2,10 +2,16 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cotizador Interno — GS1 Venezuela</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Source+Sans+3:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cotizador GS1">
+  <meta name="theme-color" content="#002C6C">
+  <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Cotizador GS1 Venezuela&quot;,&quot;short_name&quot;:&quot;Cotizador GS1&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#002C6C&quot;,&quot;theme_color&quot;:&quot;#002C6C&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23002C6C'/%3E%3Ctext y='.9em' font-size='80' font-family='sans-serif' fill='%23F26334'%3EG%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;any&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}">
+<title>Cotizador GS1 Venezuela</title>
+
+<script>
 function abrirHistorial(){
   renderHistorial();
   document.getElementById('modal-hist').classList.add('open');
@@ -13,8 +19,12 @@ function abrirHistorial(){
 function cerrarHistorial(){
   document.getElementById('modal-hist').classList.remove('open');
 }
-function renderHistorial(){
-  const hist = JSON.parse(localStorage.getItem('gs1_historial')||'[]');
+async function renderHistorial(){
+  let hist = [];
+  try{
+    const res = await window.storage.get('gs1_historial');
+    hist = res ? JSON.parse(res.value) : [];
+  }catch(e){hist=[];}
   const q = document.getElementById('hist-search').value.toLowerCase();
   const exec = document.getElementById('hist-exec').value;
   const filtered = hist.filter(c=>{
@@ -39,42 +49,44 @@ function renderHistorial(){
     </tr>`).join('')+
   '</tbody></table>';
 }
-function borrarHistorial(){
+async function borrarHistorial(){
   if(!confirm('¿Borrar todo el historial? Esta acción no se puede deshacer.'))return;
-  localStorage.removeItem('gs1_historial');
+  try{await window.storage.delete('gs1_historial');}catch(e){}
   renderHistorial();
   showToast('🗑 Historial borrado');
 }
 
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --blue:#002C6C;--blue2:#003D99;--blue-dark:#001540;
   --orange:#F26334;--bg:#F0F4FA;--card:#fff;
-  --ink:#0A0F1E;--muted:#5A6380;--line:#D4DCF0;--green:#1A7F4B;
+  --ink:#454545;--muted:#5A6380;--line:#D4DCF0;--green:#1A7F4B;
+  --font:'Gotham ScreenSmart',Verdana,sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
-body{font-family:'Source Sans 3',sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden;font-size:15px}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);overflow-x:hidden;font-size:15px}
 
 /* HEADER */
 header{background:var(--blue);border-bottom:3px solid var(--orange);position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.2)}
 .hdr{max-width:1100px;margin:0 auto;padding:11px 20px;display:flex;align-items:center;gap:12px}
 .hdr-logo img{height:38px;width:auto;display:block}
 .hdr-divider{width:1px;height:28px;background:rgba(255,255,255,.2);flex-shrink:0}
-.hdr-info h1{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:#fff;line-height:1.2}
+.hdr-info h1{font-family:var(--font);font-size:14px;font-weight:700;color:#fff;line-height:1.2}
 .hdr-info p{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:1px;text-transform:uppercase}
-.hdr-folio{margin-left:auto;font-family:'DM Mono',monospace;font-size:12px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:5px 12px;border-radius:6px;white-space:nowrap}
+.hdr-folio{margin-left:auto;font-family:var(--font);font-size:12px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:5px 12px;border-radius:8px;white-space:nowrap}
 
 /* TASA BAR */
 .tasa-bar{background:#010E2E;border-bottom:1px solid rgba(255,255,255,.06)}
 .tasa-inner{max-width:1100px;margin:0 auto;padding:8px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .tasa-lbl{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
-.tasa-in{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);color:#fff;padding:6px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-size:13px;width:110px}
+.tasa-in{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);color:#fff;padding:6px 10px;border-radius:8px;font-family:var(--font);font-size:13px;width:110px}
 .tasa-in:focus{outline:none;border-color:var(--orange)}
-.tasa-save{background:var(--orange);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.tasa-save{background:var(--orange);border:none;color:#fff;padding:6px 14px;border-radius:8px;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
 .tasa-save:hover{opacity:.88}
-.tasa-status{font-size:11px;color:rgba(255,255,255,.35);font-family:'DM Mono',monospace}
+.tasa-status{font-size:11px;color:rgba(255,255,255,.35);font-family:var(--font)}
 .tasa-status span{color:#7DFFB3}
 
 /* MAIN */
@@ -82,16 +94,16 @@ main{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
 .main-grid{display:grid;grid-template-columns:1.2fr 0.8fr;gap:20px;align-items:start}
 
 /* CARD */
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:0 2px 12px rgba(0,44,108,.05)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px;box-shadow:0 2px 12px rgba(0,44,108,.05)}
 .card+.card{margin-top:14px}
-.card-ttl{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:15px;display:flex;align-items:center;gap:7px}
-.card-ttl::before{content:'';width:3px;height:12px;background:var(--orange);border-radius:2px;flex-shrink:0}
+.card-ttl{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:15px;display:flex;align-items:center;gap:7px}
+.card-ttl::before{content:'';width:3px;height:12px;background:var(--orange);border-radius:4px;flex-shrink:0}
 
 /* FIELDS */
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fld{margin-bottom:11px}
 .fld label{display:block;font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px}
-.fld input,.fld select,.fld textarea{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-family:'Source Sans 3',sans-serif;font-size:14px;color:var(--ink);background:var(--bg);transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
+.fld input,.fld select,.fld textarea{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--bg);transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
 .fld select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%235A6380' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;cursor:pointer}
 .fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,44,108,.08);background:#fff}
 
@@ -100,80 +112,80 @@ main{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
 .esc-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:8px;font-size:12.5px;color:var(--muted);cursor:pointer;transition:all .15s;border:1.5px solid transparent}
 .esc-row:hover{background:rgba(0,44,108,.04);color:var(--blue)}
 .esc-row.sel{background:rgba(0,44,108,.07);border-color:var(--blue);color:var(--blue);font-weight:600}
-.esc-row .mono{font-family:'DM Mono',monospace;font-size:11px;text-align:right;white-space:nowrap}
+.esc-row .mono{font-family:var(--font);font-size:11px;text-align:right;white-space:nowrap}
 
 /* RESULTADO */
-.res-card{background:linear-gradient(145deg,var(--blue-dark) 0%,var(--blue) 55%,var(--blue2) 100%);border-radius:14px;padding:20px;color:#fff;position:sticky;top:72px;box-shadow:0 8px 28px rgba(0,44,108,.28)}
-.res-folio{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,.4);margin-bottom:2px;letter-spacing:.5px}
-.res-empresa{font-family:'Montserrat',sans-serif;font-size:16px;font-weight:800;line-height:1.2;margin-bottom:2px;min-height:20px}
+.res-card{background:var(--blue) 55%,var(--blue2) 100%);border-radius:8px;padding:20px;color:#fff;position:sticky;top:72px;box-shadow:none}
+.res-folio{font-family:var(--font);font-size:10px;color:rgba(255,255,255,.4);margin-bottom:2px;letter-spacing:.5px}
+.res-empresa{font-family:var(--font);font-size:16px;font-weight:800;line-height:1.2;margin-bottom:2px;min-height:20px}
 .res-meta{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:16px}
 .res-div{height:1px;background:rgba(255,255,255,.1);margin:11px 0}
 .res-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:8px}
 .res-row-l{font-size:12.5px;opacity:.65;line-height:1.4;flex:1}
 .res-row-l small{display:block;font-size:10.5px;opacity:.7;margin-top:1px}
-.res-row-v{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;text-align:right;white-space:nowrap}
+.res-row-v{font-family:var(--font);font-size:13px;font-weight:500;text-align:right;white-space:nowrap}
 .res-row-v.tach{opacity:.35;text-decoration:line-through;font-size:11px}
-.res-badge{display:inline-block;background:var(--orange);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;margin-top:2px}
-.total-box{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:14px 16px;margin-top:13px}
+.res-badge{display:inline-block;background:var(--orange);color:#fff;font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;margin-top:2px}
+.total-box{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:14px 16px;margin-top:13px}
 .total-l{font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.45;margin-bottom:3px}
-.total-n{font-family:'Montserrat',sans-serif;font-size:27px;font-weight:900;line-height:1;letter-spacing:-.5px}
-.total-n sub{font-size:13px;font-weight:400;opacity:.6;vertical-align:middle;margin-right:3px;font-family:'Source Sans 3',sans-serif}
+.total-n{font-family:var(--font);font-size:27px;font-weight:900;line-height:1;letter-spacing:-.5px}
+.total-n sub{font-size:13px;font-weight:400;opacity:.6;vertical-align:middle;margin-right:3px;font-family:var(--font)}
 .total-note{font-size:10.5px;opacity:.38;margin-top:4px;line-height:1.5}
 .empty-res{text-align:center;padding:24px 12px;opacity:.38}
 .empty-res p{font-size:13px;line-height:1.6;margin-top:8px}
 
-.btn-gen{width:100%;margin-top:13px;background:var(--orange);color:#fff;border:none;padding:13px;border-radius:9px;font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
-.btn-gen:hover{background:#D4502A;transform:translateY(-1px);box-shadow:0 5px 16px rgba(242,99,52,.35)}
+.btn-gen{width:100%;margin-top:13px;background:var(--orange);color:#fff;border:none;padding:13px;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-gen:hover{background:#D4502A;transform:translateY(-1px);box-shadow:none}
 .btn-gen:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
 
 /* TOAST */
-.toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:500;transform:translateY(70px);opacity:0;transition:all .3s;z-index:999;pointer-events:none}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--green);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;transform:translateY(70px);opacity:0;transition:all .3s;z-index:999;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,8,24,.65);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:14px;max-width:760px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.35)}
+.modal{background:#fff;border-radius:8px;max-width:760px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:none}
 .modal-actions{display:flex;gap:10px;padding:12px 36px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
-.btn-pdf{background:var(--blue);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
+.btn-pdf{background:var(--blue);color:#fff;border:none;padding:10px 18px;border-radius:8px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px}
 .btn-pdf:hover{opacity:.88}
-.btn-print2{background:none;border:1.5px solid var(--line);color:var(--muted);padding:10px 18px;border-radius:8px;font-family:'Source Sans 3',sans-serif;font-size:13px;cursor:pointer}
+.btn-print2{background:none;border:1.5px solid var(--line);color:var(--muted);padding:10px 18px;border-radius:8px;font-family:var(--font);font-size:13px;cursor:pointer}
 .btn-print2:hover{border-color:var(--blue);color:var(--blue)}
-.btn-cerrar{background:none;border:1.5px solid var(--line);color:var(--muted);padding:10px 18px;border-radius:8px;font-family:'Source Sans 3',sans-serif;font-size:13px;cursor:pointer;margin-left:auto}
+.btn-cerrar{background:none;border:1.5px solid var(--line);color:var(--muted);padding:10px 18px;border-radius:8px;font-family:var(--font);font-size:13px;cursor:pointer;margin-left:auto}
 .btn-cerrar:hover{border-color:var(--ink);color:var(--ink)}
 
 /* COTIZACIÓN IMPRIMIBLE */
-.cot{padding:36px 40px;font-family:'Source Sans 3',sans-serif;color:#0A0F1E;font-size:14px;line-height:1.5}
+.cot{padding:36px 40px;font-family:var(--font);color:#454545;font-size:14px;line-height:1.5}
 .cot-hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2.5px solid #002C6C;margin-bottom:20px}
 .cot-logo img{height:52px;width:auto}
 .cot-meta-r{text-align:right}
-.cot-folio-n{font-family:'DM Mono',monospace;font-size:16px;color:#002C6C;letter-spacing:.5px;font-weight:500}
+.cot-folio-n{font-family:var(--font);font-size:16px;color:#002C6C;letter-spacing:.5px;font-weight:500}
 .cot-fecha{font-size:11px;color:#5A6380;margin-top:3px}
 .cot-vigencia{font-size:11px;color:#F26334;font-weight:600;margin-top:2px}
-.cot-sec-ttl{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5A6380;margin-bottom:7px}
-.cot-empresa-blk{background:#F0F4FA;border-radius:9px;padding:13px 16px;margin-bottom:16px}
-.cot-empresa-nom{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:#002C6C;margin-bottom:4px}
+.cot-sec-ttl{font-family:var(--font);font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#5A6380;margin-bottom:7px}
+.cot-empresa-blk{background:#F0F4FA;border-radius:8px;padding:13px 16px;margin-bottom:16px}
+.cot-empresa-nom{font-family:var(--font);font-size:18px;font-weight:800;color:#002C6C;margin-bottom:4px}
 .cot-empresa-det{display:flex;gap:16px;flex-wrap:wrap}
 .cot-empresa-det span{font-size:12px;color:#5A6380}
-.cot-empresa-det strong{color:#0A0F1E}
+.cot-empresa-det strong{color:#454545}
 .cot-tabla{width:100%;border-collapse:collapse;margin-bottom:16px}
-.cot-tabla th{background:#002C6C;color:#fff;font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:9px 12px;text-align:left}
+.cot-tabla th{background:#002C6C;color:#fff;font-family:var(--font);font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:9px 12px;text-align:left}
 .cot-tabla td{padding:9px 12px;border-bottom:1px solid #D4DCF0;font-size:13px;vertical-align:middle}
 .cot-tabla tr:last-child td{border-bottom:none}
-.cot-tabla .mono{font-family:'DM Mono',monospace;font-size:12px}
+.cot-tabla .mono{font-family:var(--font);font-size:12px}
 .cot-tabla .tach-cell{text-decoration:line-through;opacity:.38;font-size:11px}
-.cot-tabla tr.total-row td{background:#F0F4FA;font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;color:#002C6C;border-top:2px solid #002C6C}
+.cot-tabla tr.total-row td{background:#F0F4FA;font-family:var(--font);font-weight:800;font-size:14px;color:#002C6C;border-top:2px solid #002C6C}
 .pago-sec{margin-bottom:16px}
 .pago-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:7px}
 .pago-card{background:#002C6C;border-radius:8px;padding:12px 13px;color:#fff}
-.pago-card-ttl{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:700;color:#F26334;text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+.pago-card-ttl{font-family:var(--font);font-size:9.5px;font-weight:700;color:#F26334;text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
 .pago-card p{font-size:11px;line-height:1.65;color:rgba(255,255,255,.82)}
 .pago-card strong{color:#fff;font-size:11.5px}
-.cot-nota{background:#FFF5F0;border-left:3px solid #F26334;border-radius:0 7px 7px 0;padding:10px 13px;font-size:11.5px;color:#0A0F1E;line-height:1.7;margin-bottom:16px}
+.cot-nota{background:#FFF5F0;border-left:3px solid #F26334;border-radius:0 7px 7px 0;padding:10px 13px;font-size:11.5px;color:#454545;line-height:1.7;margin-bottom:16px}
 .cot-firma{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid #D4DCF0}
 .firma-blk{text-align:center}
 .firma-linea{height:1px;background:#D4DCF0;margin:26px 0 6px}
-.firma-nom{font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;color:#002C6C}
+.firma-nom{font-family:var(--font);font-size:12px;font-weight:700;color:#002C6C}
 .firma-cargo{font-size:10px;color:#5A6380;letter-spacing:.4px}
 .cot-footer{margin-top:18px;padding-top:11px;border-top:1px solid #D4DCF0;display:flex;justify-content:space-between;font-size:10px;color:#5A6380}
 
@@ -197,24 +209,32 @@ main{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
 }
 
 @media print{
-  header,.tasa-bar,.modal-actions{display:none!important}
-  .modal-overlay{position:static!important;background:none!important;padding:0;display:block!important}
-  .modal{box-shadow:none;border-radius:0;max-height:none;max-width:none;overflow:visible}
-  .cot{padding:12px}
+  /* Hide everything except the quotation */
+  body > *:not(#print-portal){display:none!important}
+  #print-portal{display:block!important;position:fixed;inset:0;background:#fff;z-index:99999}
+  #print-portal .cot{padding:20px 28px;font-size:13px}
+  /* Ensure grid layouts render properly in print */
+  .pago-grid{display:grid!important;grid-template-columns:1fr 1fr 1fr!important}
+  .cot-firma{display:grid!important;grid-template-columns:1fr 1fr!important}
+  /* Force colors to print */
+  .cot-tabla th{background:#002C6C!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#fff!important}
+  .cot-tabla tr.total-row td{background:#F0F4FA!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pago-card{background:#002C6C!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#fff!important}
+  .cot-nota{background:#FFF5F0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
 /* HISTORIAL */
 #modal-hist{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;}
 #modal-hist.open{display:flex;}
-.hist-box{background:#fff;border-radius:20px;width:100%;max-width:780px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;margin:auto;}
+.hist-box{background:#fff;border-radius:8px;width:100%;max-width:780px;box-shadow:none;overflow:hidden;margin:auto;}
 .hist-head{background:#002C6C;padding:20px 28px;display:flex;align-items:center;justify-content:space-between;}
-.hist-head h2{font-family:'Montserrat',sans-serif;font-size:18px;font-weight:800;color:#fff;}
+.hist-head h2{font-family:var(--font);font-size:18px;font-weight:800;color:#fff;}
 .hist-head-sub{font-size:12px;color:rgba(255,255,255,.45);margin-top:2px;}
 .hist-close{background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .hist-filters{padding:14px 28px;border-bottom:1px solid #E5E5E5;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-.hist-search{flex:1;min-width:160px;padding:8px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;}
+.hist-search{flex:1;min-width:160px;padding:8px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-family:var(--font);font-size:13px;}
 .hist-search:focus{outline:none;border-color:#002C6C;}
-.hist-filter-sel{padding:8px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;background:#fff;color:#0D0D0D;}
+.hist-filter-sel{padding:8px 12px;border:1.5px solid #E5E5E5;border-radius:8px;font-family:var(--font);font-size:13px;background:#fff;color:#0D0D0D;}
 .hist-clear{padding:8px 14px;background:#FFF0ED;border:1.5px solid rgba(242,99,52,.2);color:#F26334;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
 .hist-body{max-height:55vh;overflow-y:auto;}
 .hist-empty{padding:48px 28px;text-align:center;color:#7A7A7A;font-size:14px;}
@@ -223,17 +243,33 @@ main{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
 .hist-table td{padding:12px 16px;font-size:13px;color:#0D0D0D;border-bottom:1px solid #F0F0F0;vertical-align:top;}
 .hist-table tr:last-child td{border-bottom:none;}
 .hist-table tr:hover td{background:#FAFAF8;}
-.hist-folio{font-family:'DM Mono',monospace;font-size:12px;color:#002C6C;font-weight:500;}
-.hist-monto{font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:#0D0D0D;white-space:nowrap;}
-.hist-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:#EEF3FA;color:#002C6C;}
+.hist-folio{font-family:var(--font);font-size:12px;color:#002C6C;font-weight:500;}
+.hist-monto{font-family:var(--font);font-size:13px;font-weight:600;color:#0D0D0D;white-space:nowrap;}
+.hist-tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;background:#EEF3FA;color:#002C6C;}
 .hist-foot{padding:14px 28px;border-top:1px solid #E5E5E5;display:flex;align-items:center;justify-content:space-between;background:#FAFAF8;}
 .hist-count{font-size:12px;color:#7A7A7A;}
 .hist-del{padding:7px 14px;background:#FFF0ED;border:1.5px solid rgba(192,57,43,.15);color:#C0392B;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;}
 
 /* MÓDULO IVA */
-.iva-wrap{border:1.5px dashed #C2D0F5;border-radius:10px;margin-bottom:12px;overflow:hidden}
+.iva-wrap{border:1.5px dashed #C2D0F5;border-radius:8px;margin-bottom:12px;overflow:hidden}
 .iva-toggle{display:flex;align-items:center;gap:7px;padding:10px 13px;font-size:12px;font-weight:700;color:var(--blue);cursor:pointer;background:#F4F7FF;letter-spacing:.2px;user-select:none}
 .iva-toggle:hover{background:#EBF0FF}
+
+/* ── MOBILE APP (safe-area para iPhone notch) ── */
+header{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.tasa-inner{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right))}
+main{padding-left:max(20px,env(safe-area-inset-left));padding-right:max(20px,env(safe-area-inset-right));padding-bottom:max(60px,env(safe-area-inset-bottom))}
+@media(max-width:480px){
+  .frow{grid-template-columns:1fr}
+  .hdr-folio{display:none}
+  .modal-actions{flex-direction:column;gap:8px}
+  .modal-actions button{width:100%}
+  .esc-row .mono{display:none}
+  .hist-filters{flex-direction:column}
+  .hist-search{width:100%}
+  .hist-body{max-height:50vh}
+  .hist-table th:nth-child(3),.hist-table td:nth-child(3){display:none}
+}
 </style>
 </head>
 <body>
@@ -328,38 +364,38 @@ main{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
                 <div style="background:#F8F9FF;border:1px solid var(--line);border-radius:8px;padding:10px">
                   <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px">Mes 1</div>
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Decl. 1 (Bs.)</div>
-                  <input type="number" id="iva-m1d1" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:6px">
+                  <input type="number" id="iva-m1d1" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font);margin-bottom:6px">
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Decl. 2 (Bs.)</div>
-                  <input type="number" id="iva-m1d2" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:6px">
+                  <input type="number" id="iva-m1d2" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font);margin-bottom:6px">
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Tasa GS1 (Bs./$)</div>
-                  <input type="number" id="iva-m1t" placeholder="700" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace">
+                  <input type="number" id="iva-m1t" placeholder="700" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font)">
                 </div>
                 <!-- Mes 2 -->
                 <div style="background:#F8F9FF;border:1px solid var(--line);border-radius:8px;padding:10px">
                   <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px">Mes 2</div>
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Decl. 1 (Bs.)</div>
-                  <input type="number" id="iva-m2d1" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:6px">
+                  <input type="number" id="iva-m2d1" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font);margin-bottom:6px">
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Decl. 2 (Bs.)</div>
-                  <input type="number" id="iva-m2d2" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:6px">
+                  <input type="number" id="iva-m2d2" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font);margin-bottom:6px">
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Tasa GS1 (Bs./$)</div>
-                  <input type="number" id="iva-m2t" placeholder="700" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace">
+                  <input type="number" id="iva-m2t" placeholder="700" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font)">
                 </div>
                 <!-- Mes 3 -->
                 <div style="background:#F8F9FF;border:1px solid var(--line);border-radius:8px;padding:10px">
                   <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px">Mes 3</div>
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Decl. 1 (Bs.)</div>
-                  <input type="number" id="iva-m3d1" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:6px">
+                  <input type="number" id="iva-m3d1" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font);margin-bottom:6px">
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Decl. 2 (Bs.)</div>
-                  <input type="number" id="iva-m3d2" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace;margin-bottom:6px">
+                  <input type="number" id="iva-m3d2" placeholder="0" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font);margin-bottom:6px">
                   <div style="font-size:11px;color:var(--muted);margin-bottom:3px">Tasa GS1 (Bs./$)</div>
-                  <input type="number" id="iva-m3t" placeholder="700" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace">
+                  <input type="number" id="iva-m3t" placeholder="700" oninput="calcIva()" style="width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:4px;font-size:12px;font-family:var(--font)">
                 </div>
               </div>
               <div id="iva-resultado" style="display:none;background:#EEF3FF;border:1.5px solid #C2D0F5;border-radius:8px;padding:10px 13px;margin-bottom:8px">
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
                   <div>
                     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Ingreso anual estimado</div>
-                    <div style="font-family:'DM Mono',monospace;font-size:18px;font-weight:700;color:var(--blue)" id="iva-usd-total">$0</div>
+                    <div style="font-family:var(--font);font-size:18px;font-weight:700;color:var(--blue)" id="iva-usd-total">$0</div>
                   </div>
                   <div style="text-align:right">
                     <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">Escala calculada</div>
@@ -367,7 +403,7 @@ main{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
                   </div>
                 </div>
               </div>
-              <button onclick="aplicarEscalaIva()" id="iva-btn-aplicar" style="display:none;width:100%;background:var(--blue);color:#fff;border:none;padding:9px;border-radius:7px;font-family:'Montserrat',sans-serif;font-weight:700;font-size:12px;cursor:pointer;letter-spacing:.3px">
+              <button onclick="aplicarEscalaIva()" id="iva-btn-aplicar" style="display:none;width:100%;background:var(--blue);color:#fff;border:none;padding:9px;border-radius:8px;font-family:var(--font);font-weight:700;font-size:12px;cursor:pointer;letter-spacing:.3px">
                 ✓ Aplicar esta escala a la cotización
               </button>
             </div>
@@ -385,17 +421,17 @@ main{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
           <div id="bloque-periodo" style="margin-top:13px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
               <label style="margin:0">Período de afiliación</label>
-              <span id="periodo-badge" style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:#E8F0FE;color:var(--blue)"></span>
+              <span id="periodo-badge" style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;background:#E8F0FE;color:var(--blue)"></span>
             </div>
             <!-- Selector manual de período -->
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-              <select id="f-periodo-manual" onchange="onPeriodoManualChange()" style="flex:1;padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:'Montserrat',sans-serif;font-size:12px;color:var(--text);background:#fff">
+              <select id="f-periodo-manual" onchange="onPeriodoManualChange()" style="flex:1;padding:7px 10px;border:1.5px solid var(--line);border-radius:8px;font-family:var(--font);font-size:12px;color:var(--text);background:#fff">
                 <option value="auto">🔄 Automático (según fecha actual)</option>
                 <option value="eneJun">Enero – Junio (100% + 100%)</option>
                 <option value="julSep">Julio – Septiembre (100% + 50%)</option>
                 <option value="octDic">Octubre – Diciembre (beneficio especial)</option>
               </select>
-              <span id="modo-periodo-badge" style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;background:#E8F5E9;color:#2E7D32">Auto</span>
+              <span id="modo-periodo-badge" style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:8px;white-space:nowrap;background:#E8F5E9;color:#2E7D32">Auto</span>
             </div>
             <div style="background:#F8F9FF;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--muted)" id="periodo-desc"></div>
 
@@ -404,14 +440,14 @@ main{max-width:1100px;margin:0 auto;padding:20px 20px 60px}
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
                 <div style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.5px">⚡ Oct–Dic · Beneficio especial disponible</div>
                 <div style="display:flex;gap:6px">
-                  <button id="btn-modo-regular" onclick="setModoOctDic('regular')" style="padding:5px 11px;border-radius:6px;border:1.5px solid #ccc;background:#fff;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;cursor:pointer">Cotización regular</button>
-                  <button id="btn-modo-especial" onclick="setModoOctDic('especial')" style="padding:5px 11px;border-radius:6px;border:1.5px solid var(--orange);background:var(--orange);color:#fff;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;cursor:pointer">Aplicar beneficio</button>
+                  <button id="btn-modo-regular" onclick="setModoOctDic('regular')" style="padding:5px 11px;border-radius:8px;border:1.5px solid #ccc;background:#fff;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer">Cotización regular</button>
+                  <button id="btn-modo-especial" onclick="setModoOctDic('especial')" style="padding:5px 11px;border-radius:8px;border:1.5px solid var(--orange);background:var(--orange);color:#fff;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer">Aplicar beneficio</button>
                 </div>
               </div>
               <div id="panel-beneficio">
                 <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Mantenimiento <strong>año en curso exonerado</strong>. Descuento sobre mantenimiento del próximo año:</div>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input type="number" id="f-descuento" min="0" max="100" placeholder="%" oninput="calcular()" style="width:70px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:'DM Mono',monospace;font-size:13px">
+                  <input type="number" id="f-descuento" min="0" max="100" placeholder="%" oninput="calcular()" style="width:70px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-family:var(--font);font-size:13px">
                   <span style="font-size:12px;color:var(--muted)">% de descuento sobre mantenimiento <strong id="lbl-anio-sig"></strong></span>
                 </div>
               </div>
@@ -511,11 +547,20 @@ function tarifaBs(esc){return{ins:Math.round(TARIFAS_USD[esc].ins*tasaBCV),man:M
 function noUsuarioBs(esc){return{ins:Math.round(NO_USUARIO_USD[esc].ins*tasaBCV),man:Math.round(NO_USUARIO_USD[esc].man*tasaBCV)};}
 function empBs(){return{ins:Math.round(EMP_USD.ins*tasaBCV),man:0};}
 let escala=null, tipo='normal';
-let tasaBCV = parseFloat(localStorage.getItem('gs1_tasa'))||700;
-let folioNum = parseInt(localStorage.getItem('gs1_folio'))||1;
+let tasaBCV = 700; // Se carga desde storage en onload
+let folioNum = 1;   // Se carga desde storage en onload
 let cotizacionActual = null;
 
-window.onload=()=>{
+window.onload=async()=>{
+  // Cargar tasa y folio desde storage persistente
+  try{
+    const t=await window.storage.get('gs1_tasa');
+    if(t)tasaBCV=parseFloat(t.value)||700;
+  }catch(e){}
+  try{
+    const f=await window.storage.get('gs1_folio');
+    if(f)folioNum=parseInt(f.value)||1;
+  }catch(e){}
   document.getElementById('tasa-val').value=tasaBCV;
   actualizarTasaStatus();
   actualizarEtiquetasEscala();
@@ -535,7 +580,7 @@ function actualizarEtiquetasEscala(){
 function guardarTasa(){
   const v=parseFloat(document.getElementById('tasa-val').value);
   if(!v||v<=0){showToast('⚠️ Ingresa una tasa válida');return;}
-  tasaBCV=v;localStorage.setItem('gs1_tasa',v);
+  tasaBCV=v;(async()=>{try{await window.storage.set('gs1_tasa',String(v));}catch(e){}})();
   actualizarTasaStatus();actualizarEtiquetasEscala();showToast('✓ Tasa: Bs. '+fmt(v));calcular();
 }
 function actualizarTasaStatus(){
@@ -740,7 +785,7 @@ function generarCotizacion(){
   const esNoUsr=tipo==='noUsuario';
   const info=getMesInfo();
 
-  folioNum++;localStorage.setItem('gs1_folio',folioNum);
+  folioNum++;(async()=>{try{await window.storage.set('gs1_folio',String(folioNum));}catch(e){}})();
   const folio='COT-'+new Date().getFullYear()+'-'+String(folioNum).padStart(4,'0');
   document.getElementById('hdr-folio').textContent=folio;
 
@@ -788,10 +833,13 @@ function generarCotizacion(){
     :'La cuota de inscripción es de pago único. El mantenimiento anual se renueva el 1ro de enero de cada año. Precios expresados en Bolívares (Bs.).';
 
   cotizacionActual = {folio, empresa, ejecutivo, sector, escalaLabel, total, fechaStr};
-  // Guardar en historial
-  const hist = JSON.parse(localStorage.getItem('gs1_historial')||'[]');
-  hist.unshift({folio, empresa, rif, contacto, ejecutivo, sector, escalaLabel, total, ins, manPagar, fechaStr});
-  localStorage.setItem('gs1_historial', JSON.stringify(hist.slice(0,200)));
+  // Guardar en historial persistente
+  (async ()=>{
+    let hist=[];
+    try{const r=await window.storage.get('gs1_historial');hist=r?JSON.parse(r.value):[];}catch(e){}
+    hist.unshift({folio, empresa, rif, contacto, ejecutivo, sector, escalaLabel, total, ins, manPagar, fechaStr});
+    try{await window.storage.set('gs1_historial',JSON.stringify(hist.slice(0,200)));}catch(e){}
+  })();
 
   document.getElementById('cot-print').innerHTML=`
     <div class="cot-hdr">
@@ -840,17 +888,202 @@ function generarCotizacion(){
 }
 
 function descargarPDF(){
-  const el=document.getElementById('cot-print');
-  const nombre=cotizacionActual?cotizacionActual.folio+'-'+cotizacionActual.empresa.replace(/[^a-zA-Z0-9]/g,'_'):'cotizacion-gs1';
-  const opt={
-    margin:[8,8,8,8],
-    filename:nombre+'.pdf',
-    image:{type:'jpeg',quality:0.97},
-    html2canvas:{scale:2,useCORS:true,logging:false},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  };
-  showToast('⏳ Generando PDF...');
-  html2pdf().set(opt).from(el).save().then(()=>showToast('✓ PDF descargado'));
+  if(!cotizacionActual){showToast('⚠ Genera una cotización primero');return;}
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,M=14,CW=W-M*2; // ancho, margen, ancho de contenido
+  let y=M;
+
+  // Colores marca
+  const azul=[0,44,108];
+  const naranja=[242,99,52];
+  const grisClaro=[240,244,250];
+  const grisLinea=[212,220,240];
+  const blanco=[255,255,255];
+
+  // ── ENCABEZADO ──────────────────────────────────────────────
+  doc.setFillColor(...azul);
+  doc.rect(M,y,CW,0.8,'F');
+  y+=4;
+
+  // Logo text (fallback — si no hay imagen real)
+  doc.setFontSize(18);doc.setFont('helvetica','bold');
+  doc.setTextColor(...azul);
+  doc.text('GS1 Venezuela',M,y+6);
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.setTextColor(90,99,128);
+  doc.text('The Global Language of Business',M,y+11);
+
+  // Folio y fecha (derecha)
+  doc.setFontSize(13);doc.setFont('helvetica','bold');
+  doc.setTextColor(...azul);
+  doc.text(cotizacionActual.folio,W-M,y+5,{align:'right'});
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.setTextColor(90,99,128);
+  doc.text('Emisión: '+cotizacionActual.fechaStr,W-M,y+10,{align:'right'});
+
+  // Calcular vigencia (próximo viernes)
+  const hoy=new Date();
+  const dia=hoy.getDay();
+  const diasV=dia===5?7:(5-dia+7)%7||7;
+  const viernes=new Date(hoy);viernes.setDate(hoy.getDate()+diasV);
+  const viernesStr=viernes.toLocaleDateString('es-VE',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  doc.setTextColor(...naranja);doc.setFont('helvetica','bold');
+  doc.text('Válida hasta: '+viernesStr,W-M,y+15,{align:'right'});
+
+  y+=22;
+  doc.setDrawColor(...azul);doc.setLineWidth(0.5);
+  doc.line(M,y,W-M,y);
+  y+=6;
+
+  // ── TÍTULO ──────────────────────────────────────────────────
+  doc.setFontSize(8);doc.setFont('helvetica','bold');
+  doc.setTextColor(90,99,128);
+  doc.text('PROPUESTA DE MEMBRESÍA GS1',M,y);
+  y+=5;
+
+  // ── DATOS DE EMPRESA ────────────────────────────────────────
+  doc.setFillColor(...grisClaro);
+  doc.roundedRect(M,y,CW,22,2,2,'F');
+  doc.setFontSize(14);doc.setFont('helvetica','bold');
+  doc.setTextColor(...azul);
+  doc.text(cotizacionActual.empresa||'—',M+4,y+8);
+
+  // Detalles en línea
+  const empresa=document.getElementById('f-empresa').value.trim();
+  const rif=document.getElementById('f-rif').value.trim();
+  const contacto=document.getElementById('f-contacto').value.trim();
+  const tel=document.getElementById('f-tel').value.trim();
+  const email=document.getElementById('f-email').value.trim();
+  const sectorVal=document.getElementById('f-sector').value;
+
+  let detalles=[];
+  if(rif) detalles.push('RIF: '+rif);
+  if(sectorVal) detalles.push('Sector: '+sectorVal);
+  if(contacto) detalles.push('Contacto: '+contacto);
+  if(tel) detalles.push('Tel: '+tel);
+  if(email) detalles.push('Email: '+email);
+
+  doc.setFontSize(8);doc.setFont('helvetica','normal');
+  doc.setTextColor(90,99,128);
+  doc.text(detalles.join('   '),M+4,y+15,{maxWidth:CW-8});
+  y+=28;
+
+  // ── TABLA DE CONCEPTOS ──────────────────────────────────────
+  const thH=8;
+  doc.setFillColor(...azul);
+  doc.rect(M,y,CW,thH,'F');
+  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...blanco);
+  doc.text('CONCEPTO',M+3,y+5.5);
+  doc.text('DETALLE',M+75,y+5.5);
+  doc.text('MONTO (Bs.)',W-M-3,y+5.5,{align:'right'});
+  y+=thH;
+
+  // Obtener filas de la tabla HTML del DOM
+  const tabla=document.querySelector('#cot-print .cot-tabla tbody');
+  if(tabla){
+    const filas=tabla.querySelectorAll('tr');
+    filas.forEach((tr,idx)=>{
+      const tds=tr.querySelectorAll('td');
+      if(!tds.length) return;
+      const concepto=tds[0]?tds[0].textContent.trim():'';
+      const detalle=tds[1]?tds[1].textContent.trim():'';
+      const monto=tds[2]?tds[2].textContent.trim():(tds[1]?'':'');
+
+      const esTotalRow=tr.classList.contains('total-row');
+      const rowH=9;
+
+      if(esTotalRow){
+        doc.setFillColor(...grisClaro);
+        doc.rect(M,y,CW,rowH,'F');
+        doc.setDrawColor(...azul);doc.setLineWidth(0.5);
+        doc.line(M,y,W-M,y);
+        doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...azul);
+        doc.text((tds[0]?tds[0].textContent.trim():'Total a Pagar'),M+3,y+6);
+        doc.text((tds[2]?tds[2].textContent.trim():monto),W-M-3,y+6,{align:'right'});
+      } else {
+        if(idx%2===0){
+          doc.setFillColor(250,250,250);
+          doc.rect(M,y,CW,rowH,'F');
+        }
+        doc.setDrawColor(...grisLinea);doc.setLineWidth(0.2);
+        doc.line(M,y+rowH,W-M,y+rowH);
+        doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(10,15,30);
+        doc.text(concepto,M+3,y+5.8,{maxWidth:65});
+        doc.text(detalle,M+75,y+5.8,{maxWidth:65});
+        doc.text(monto,W-M-3,y+5.8,{align:'right'});
+      }
+      y+=rowH;
+    });
+  }
+  y+=6;
+
+  // ── FORMAS DE PAGO ──────────────────────────────────────────
+  doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(90,99,128);
+  doc.text('FORMAS DE PAGO — A nombre de GS1 Venezuela · RIF J-00336360-0',M,y);
+  y+=4;
+
+  const pagoW=(CW-4)/3;
+  const pagoH=24;
+  const pagos=[
+    {titulo:'📱 Pago Móvil',lineas:['Banesco y Mercantil','0424-103 3271']},
+    {titulo:'🌍 Moneda Internacional',lineas:['Cta: 0105 0193 80 5193007732','Depósitos USD en efectivo']},
+    {titulo:'🏦 Transferencia Electrónica',lineas:['BVC: 0104-0107-1701-0708-0503','Mercantil: 0105-0193-8811-9300-5558','Banesco: 0134-0069-5706-9102-2951']}
+  ];
+  pagos.forEach((p,i)=>{
+    const px=M+i*(pagoW+2);
+    doc.setFillColor(...azul);
+    doc.roundedRect(px,y,pagoW,pagoH,1.5,1.5,'F');
+    doc.setFontSize(7);doc.setFont('helvetica','bold');doc.setTextColor(...naranja);
+    doc.text(p.titulo,px+3,y+5);
+    doc.setFont('helvetica','normal');doc.setTextColor(220,228,240);
+    p.lineas.forEach((l,li)=>doc.text(l,px+3,y+9+li*4,{maxWidth:pagoW-6}));
+  });
+  y+=pagoH+5;
+
+  // ── NOTA / CONDICIONES ──────────────────────────────────────
+  const obs=document.getElementById('f-obs').value.trim();
+  const esEmp=tipo==='emp';
+  const condText=esEmp
+    ?'Plan Emprendedor: inscripción única, mantenimiento exonerado el primer año. A partir del segundo año se renueva bajo Escala 1.'
+    :'La cuota de inscripción es de pago único. El mantenimiento anual se renueva el 1ro de enero de cada año. Precios en Bolívares (Bs.).';
+
+  doc.setFillColor(255,245,240);
+  const notaLines=doc.splitTextToSize('Condiciones: '+condText+(obs?'  Nota: '+obs:''),CW-10);
+  const notaH=notaLines.length*4+6;
+  doc.roundedRect(M,y,CW,notaH,1.5,1.5,'F');
+  doc.setDrawColor(...naranja);doc.setLineWidth(0.8);
+  doc.line(M,y,M,y+notaH);
+  doc.setFontSize(7.5);doc.setFont('helvetica','normal');doc.setTextColor(10,15,30);
+  doc.text(notaLines,M+5,y+4.5);
+  y+=notaH+6;
+
+  // ── FIRMAS ──────────────────────────────────────────────────
+  const firmaW=(CW-8)/2;
+  [[cotizacionActual.ejecutivo, cotizacionActual.ejecutivo==='Andreina Pestana'?'Gerente Comercial':'Ejecutivo Comercial'],
+   [cotizacionActual.empresa,'Representante Legal / Autorizado']
+  ].forEach(([nom,cargo],i)=>{
+    const fx=M+i*(firmaW+8);
+    doc.setDrawColor(...grisLinea);doc.setLineWidth(0.4);
+    doc.line(fx,y+12,fx+firmaW,y+12);
+    doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(...azul);
+    doc.text(nom||'',fx+firmaW/2,y+17,{align:'center',maxWidth:firmaW});
+    doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(90,99,128);
+    doc.text(cargo+' · GS1 Venezuela',fx+firmaW/2,y+21,{align:'center',maxWidth:firmaW});
+  });
+  y+=28;
+
+  // ── PIE DE PÁGINA ───────────────────────────────────────────
+  doc.setDrawColor(...grisLinea);doc.setLineWidth(0.3);
+  doc.line(M,y,W-M,y);y+=4;
+  doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(90,99,128);
+  doc.text('GS1 Venezuela · www.gs1ve.org · 0414 304 2207 · @gs1venezuela',M,y);
+  doc.text(cotizacionActual.folio+' · '+cotizacionActual.fechaStr,W-M,y,{align:'right'});
+
+  // ── GUARDAR ─────────────────────────────────────────────────
+  const nombre=cotizacionActual.folio+'-'+(cotizacionActual.empresa||'gs1').replace(/[^a-zA-Z0-9]/g,'_');
+  doc.save(nombre+'.pdf');
+  showToast('✓ PDF generado');
 }
 
 function cerrarModal(e){if(e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open');}
@@ -902,8 +1135,12 @@ function abrirHistorial(){
 function cerrarHistorial(){
   document.getElementById('modal-hist').classList.remove('open');
 }
-function renderHistorial(){
-  const hist = JSON.parse(localStorage.getItem('gs1_historial')||'[]');
+async function renderHistorial(){
+  let hist = [];
+  try{
+    const res = await window.storage.get('gs1_historial');
+    hist = res ? JSON.parse(res.value) : [];
+  }catch(e){hist=[];}
   const q = document.getElementById('hist-search').value.toLowerCase();
   const exec = document.getElementById('hist-exec').value;
   const filtered = hist.filter(c=>{
@@ -928,9 +1165,9 @@ function renderHistorial(){
     </tr>`).join('')+
   '</tbody></table>';
 }
-function borrarHistorial(){
+async function borrarHistorial(){
   if(!confirm('¿Borrar todo el historial? Esta acción no se puede deshacer.'))return;
-  localStorage.removeItem('gs1_historial');
+  try{await window.storage.delete('gs1_historial');}catch(e){}
   renderHistorial();
   showToast('🗑 Historial borrado');
 }
@@ -965,5 +1202,7 @@ function borrarHistorial(){
   </div>
 </div>
 
+
+<div id="print-portal" style="display:none"></div>
 </body>
 </html>
